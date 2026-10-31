@@ -1,0 +1,3 @@
+192.168.1.50; Setor Producao - C3000; ricoh; critica
+192.168.1.51; Almoxarifado - P502; ricoh
+192.168.1.52; Recepcao - Epson; epson

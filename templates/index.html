@@ -1,0 +1,1579 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Monitoramento de Impressoras - Ricoh Brasil</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        :root {
+            --brand-primary: rgb(204, 0, 0);
+            --brand-primary-hover: rgb(170, 0, 0);
+            --bg-color: rgb(244, 246, 249);
+            --card-bg: rgb(255, 255, 255);
+            --text-primary: rgb(33, 37, 41);
+            --text-secondary: rgb(108, 117, 125);
+            --border-color: rgb(225, 232, 237);
+            --control-bg: rgb(255, 255, 255);
+            --toggle-bg: rgb(241, 243, 245);
+            --modal-overlay: rgba(0, 0, 0, 0.6);
+            --report-bg: rgb(248, 249, 250);
+            --status-online: rgb(46, 204, 113);
+            --status-offline: rgb(231, 76, 60);
+            --status-warning: rgb(241, 196, 15);
+            --logo-bg: transparent;
+        }
+
+        body.dark-mode {
+            --bg-color: rgb(18, 18, 18);
+            --card-bg: rgb(28, 30, 32);
+            --text-primary: rgb(238, 238, 238);
+            --text-secondary: rgb(160, 165, 170);
+            --border-color: rgb(48, 52, 58);
+            --control-bg: rgb(28, 30, 32);
+            --toggle-bg: rgb(40, 44, 48);
+            --modal-overlay: rgba(0, 0, 0, 0.85);
+            --report-bg: rgb(38, 41, 45);
+            --logo-bg: rgba(255, 255, 255, 0.95);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            padding: 25px 30px;
+        }
+
+        header {
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .ricoh-logo-container {
+            background-color: var(--logo-bg);
+            padding: 4px 10px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ricoh-logo {
+            height: 38px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .header-divider {
+            width: 2px;
+            height: 36px;
+            background-color: var(--border-color);
+        }
+
+        .title-group h1 {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            line-height: 1.1;
+        }
+
+        .header-subtitle {
+            font-size: 0.78rem;
+            color: var(--brand-primary);
+            font-weight: 700;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            display: block;
+            margin-top: 2px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-action {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.88rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .btn-action:hover {
+            border-color: var(--brand-primary);
+            color: var(--brand-primary);
+        }
+
+        .btn-action.btn-primary-ricoh {
+            background-color: var(--brand-primary);
+            color: #fff;
+            border-color: var(--brand-primary);
+        }
+
+        .btn-action.btn-primary-ricoh:hover {
+            background-color: var(--brand-primary-hover);
+            color: #fff;
+        }
+
+        .metrics-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .metric-card {
+            background: var(--card-bg);
+            padding: 16px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .metric-card.online { border-left: 5px solid var(--status-online); }
+        .metric-card.offline { border-left: 5px solid var(--status-offline); }
+
+        .metric-info .label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .metric-info .value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+
+        .metric-icon { font-size: 2rem; }
+        .metric-card.online .metric-icon { color: var(--status-online); }
+        .metric-card.offline .metric-icon { color: var(--status-offline); }
+
+        .controls-bar {
+            background: var(--control-bg);
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+            margin-bottom: 25px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid var(--border-color);
+        }
+
+        .brand-toggle-group {
+            display: flex;
+            background: var(--toggle-bg);
+            padding: 4px;
+            border-radius: 8px;
+            gap: 4px;
+        }
+
+        .brand-btn {
+            border: none;
+            background: transparent;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .brand-btn:hover { color: var(--text-primary); }
+        
+        .brand-btn.active {
+            background: var(--card-bg);
+            color: var(--brand-primary);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+        }
+
+        .search-box {
+            position: relative;
+            flex: 1;
+            min-width: 220px;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 9px 10px 9px 38px;
+            border: 1px solid var(--border-color);
+            background-color: var(--card-bg);
+            color: var(--text-primary);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .search-box input:focus {
+            border-color: var(--brand-primary);
+        }
+
+        .filter-status-select {
+            padding: 9px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            background-color: var(--card-bg);
+            outline: none;
+            cursor: pointer;
+        }
+
+        .grid-impressoras {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 16px 14px 14px 14px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            position: relative;
+            cursor: pointer;
+            border: 2px solid var(--border-color);
+        }
+
+        .card.critica {
+            border-color: rgba(231, 76, 60, 0.4);
+        }
+
+        .card.online:hover {
+            transform: translateY(-4px);
+            border-color: var(--status-online);
+            box-shadow: 0 0 16px rgba(46, 204, 113, 0.7), 0 8px 20px rgba(46, 204, 113, 0.3);
+        }
+
+        .card.offline:hover {
+            transform: translateY(-4px);
+            border-color: var(--status-offline);
+            box-shadow: 0 0 16px rgba(231, 76, 60, 0.8), 0 8px 20px rgba(231, 76, 60, 0.4);
+        }
+
+        .status-dots-container {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .status-dot.online {
+            background-color: var(--status-online);
+            box-shadow: 0 0 8px rgba(46, 204, 113, 0.7);
+        }
+
+        .status-dot.offline {
+            background-color: var(--status-offline);
+            box-shadow: 0 0 8px rgba(231, 76, 60, 0.7);
+        }
+
+        .paper-warning-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: var(--status-warning);
+            box-shadow: 0 0 8px rgba(241, 196, 15, 0.8);
+            display: inline-block;
+            animation: pulseYellow 1.5s infinite;
+        }
+
+        .critica-badge-top {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: #e74c3c;
+            color: #ffffff;
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        @keyframes pulseYellow {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .printer-img-container {
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+            padding: 2px;
+            border-radius: 8px;
+            background: transparent;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .printer-img {
+            max-height: 100%;
+            max-width: 100%;
+            object-fit: contain;
+            transform: scale(1.3);
+            transition: transform 0.25s ease, filter 0.25s ease;
+        }
+
+        body.dark-mode .printer-img.ricoh-img {
+            filter: invert(0.92) hue-rotate(180deg) contrast(1.18) brightness(0.95);
+            mix-blend-mode: lighten;
+        }
+
+        body.dark-mode .printer-img.no-invert {
+            filter: none !important;
+            mix-blend-mode: normal !important;
+        }
+
+        .card:hover .printer-img {
+            transform: scale(1.42);
+        }
+
+        .printer-icon-fallback {
+            font-size: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .setor-label {
+            font-size: 0.98rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .ip-subtext {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .analog-toner-container {
+            margin-top: 10px;
+            padding: 6px 8px;
+            background: var(--toggle-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .analog-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .analog-bar-track {
+            height: 8px;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .analog-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.4s ease, background 0.4s ease;
+            box-shadow: 0 0 6px rgba(0,0,0,0.2);
+        }
+
+        .generic-insumo-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 12px;
+            margin-top: 8px;
+            background: var(--toggle-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .generic-insumo-badge.zebra {
+            border-color: rgba(52, 152, 219, 0.4);
+            color: #3498db;
+        }
+
+        .generic-insumo-badge.epson {
+            border-color: rgba(155, 89, 182, 0.4);
+            color: #9b59b6;
+        }
+
+        .no-results {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        #atualizacao {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--modal-overlay);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-card {
+            background: var(--card-bg);
+            width: 90%;
+            max-width: 680px;
+            max-height: 85vh;
+            overflow-y: auto;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            position: relative;
+            border: 1px solid var(--border-color);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 12px;
+            margin-bottom: 15px;
+        }
+
+        .modal-header h2 {
+            font-size: 1.3rem;
+            color: var(--text-primary);
+        }
+
+        .modal-header h2 i {
+            color: var(--brand-primary);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        .close-btn:hover { color: var(--brand-primary); }
+
+        .form-group-colaborador {
+            margin-bottom: 20px;
+        }
+
+        .form-group-colaborador label {
+            font-size: 0.85rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .form-group-colaborador input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+        }
+
+        .abastecimento-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .abastecimento-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background: var(--report-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .abastecimento-item .info {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .abastecimento-item .info span {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: normal;
+        }
+
+        .abastecimento-options {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.82rem;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 3px 6px;
+            border-radius: 4px;
+            background: rgba(0,0,0,0.03);
+            border: 1px solid var(--border-color);
+        }
+
+        .checkbox-label input {
+            width: 15px;
+            height: 15px;
+            accent-color: var(--brand-primary);
+        }
+
+        .report-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            font-size: 0.9rem;
+        }
+
+        .report-item {
+            background: var(--report-bg);
+            padding: 10px;
+            border-radius: 6px;
+            border-left: 4px solid var(--brand-primary);
+        }
+
+        .report-item.full-width { grid-column: span 2; }
+
+        .report-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            font-weight: bold;
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        .report-value {
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .history-card {
+            background: var(--report-bg);
+            border: 1px solid var(--border-color);
+            border-left: 5px solid var(--brand-primary);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+        }
+
+        .history-colaborador {
+            font-weight: 700;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        .history-details {
+            font-size: 0.85rem;
+        }
+
+        #pdfTemplate {
+            display: none;
+            padding: 25px;
+            background: #ffffff;
+            color: #000000;
+            font-family: Arial, sans-serif;
+        }
+
+        #pdfTemplate table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+
+        #pdfTemplate th, #pdfTemplate td {
+            border: 1px solid #cccccc;
+            padding: 6px 8px;
+            text-align: left;
+            font-size: 9pt;
+        }
+
+        #pdfTemplate th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .header-divider { display: none; }
+            .header-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-title">
+            <div class="ricoh-logo-container">
+                <img src="https://assets.rbl.ms/32963373/origin.png" alt="Ricoh Brasil" class="ricoh-logo" onerror="this.parentElement.style.display='none'">
+            </div>
+            <div class="header-divider"></div>
+            <div class="title-group">
+                <h1>Monitoramento de Impressoras</h1>
+                <span class="header-subtitle">Managed Services Support</span>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="btn-action btn-primary-ricoh" onclick="gerarChecklistRicoh()">
+                <i class="bi bi-card-checklist"></i> Checklist Diário Ricoh
+            </button>
+            <button class="btn-action btn-primary-ricoh" onclick="gerarPDFDiario()">
+                <i class="bi bi-file-earmark-pdf-fill"></i> PDF Geral
+            </button>
+            <button class="btn-action btn-primary-ricoh" onclick="abrirModalAbastecimento()">
+                <i class="bi bi-box-seam-fill"></i> Registro de Insumos
+            </button>
+            <button class="btn-action" onclick="abrirModalRelatorios()">
+                <i class="bi bi-file-earmark-bar-graph"></i> Relatórios
+            </button>
+            <button class="theme-toggle-btn" onclick="toggleTheme()">
+                <i class="bi bi-moon-fill" id="themeIcon"></i>
+                <span id="themeLabel">Modo Escuro</span>
+            </button>
+            <span id="atualizacao">Atualizando...</span>
+        </div>
+    </header>
+
+    <div class="metrics-container">
+        <div class="metric-card online">
+            <div class="metric-info">
+                <span class="label">Online</span>
+                <div class="value" id="countOnline">0</div>
+            </div>
+            <i class="bi bi-check-circle-fill metric-icon"></i>
+        </div>
+        <div class="metric-card offline">
+            <div class="metric-info">
+                <span class="label">Offline</span>
+                <div class="value" id="countOffline">0</div>
+            </div>
+            <i class="bi bi-x-circle-fill metric-icon"></i>
+        </div>
+    </div>
+
+    <div class="controls-bar">
+        <div class="brand-toggle-group">
+            <button class="brand-btn active" id="btnMarcaTodas" onclick="selecionarMarca('todas')">Todas</button>
+            <button class="brand-btn" id="btnMarcaRicoh" onclick="selecionarMarca('ricoh')">Ricoh</button>
+            <button class="brand-btn" id="btnMarcaEpson" onclick="selecionarMarca('epson')">Epson</button>
+            <button class="brand-btn" id="btnMarcaZebra" onclick="selecionarMarca('zebra')">Zebra</button>
+        </div>
+
+        <div class="search-box">
+            <i class="bi bi-search"></i>
+            <input type="text" id="searchInput" placeholder="Buscar por setor ou IP..." oninput="aplicarFiltros()">
+        </div>
+
+        <select id="filterStatus" class="filter-status-select" onchange="aplicarFiltros()">
+            <option value="todos">Todos os Status</option>
+            <option value="toner_critico">🔴 Toner Crítico / Baixo (25% ou 0%)</option>
+            <option value="producao_critica">🚨 Produção (Críticas)</option>
+            <option value="online">Apenas Online</option>
+            <option value="offline">Apenas Offline</option>
+            <option value="controle_papel">📄 Controle de Papel (Sem/Quase Sem Papel)</option>
+        </select>
+    </div>
+
+    <div class="grid-impressoras" id="grid"></div>
+
+    <div id="pdfTemplate"></div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2><i class="bi bi-file-earmark-text"></i> Relatório do Dispositivo</h2>
+                <button class="close-btn" onclick="fecharModal()">&times;</button>
+            </div>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalAbastecimento">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2><i class="bi bi-box-seam-fill"></i> Checklist de Troca de Insumos (Ricoh)</h2>
+                <button class="close-btn" onclick="fecharModalAbastecimento()">&times;</button>
+            </div>
+            <div class="form-group-colaborador">
+                <label for="colaboradorNome">Nome do Colaborador:</label>
+                <input type="text" id="colaboradorNome" placeholder="Digite seu nome completo...">
+            </div>
+            <div class="abastecimento-list" id="abastecimentoList"></div>
+            <button class="btn-action btn-primary-ricoh" style="width: 100%; justify-content: center; padding: 12px;" onclick="salvarAbastecimento()">
+                <i class="bi bi-check-circle-fill"></i> Finalizar Registro de Insumos
+            </button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalRelatorios">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2><i class="bi bi-journal-text"></i> Histórico e Controle de Insumos</h2>
+                <button class="close-btn" onclick="fecharModalRelatorios()">&times;</button>
+            </div>
+            <div id="relatoriosContent"></div>
+        </div>
+    </div>
+
+    <script>
+        let todasImpressoras = [];
+        let marcaSelecionada = 'todas';
+        let historicoAbastecimentos = [];
+
+        function isColorPrinter(imp) {
+            if (imp.toner_info && imp.toner_info.is_color) return true;
+            const str = ((imp.setor || '') + ' ' + (imp.modelo || '') + ' ' + (imp.ip || '')).toUpperCase();
+            return str.includes('C3000') || str.includes('C300') || str.includes('COLOR') || str.includes('PLOTTER') || str.includes('PLOTER') || str.includes('MPC');
+        }
+
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+                updateThemeUI(true);
+            }
+        }
+
+        function toggleTheme() {
+            const isDark = document.body.classList.toggle('dark-mode');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            updateThemeUI(isDark);
+            aplicarFiltros();
+        }
+
+        function updateThemeUI(isDark) {
+            const icon = document.getElementById('themeIcon');
+            const label = document.getElementById('themeLabel');
+
+            if (isDark) {
+                icon.className = 'bi bi-sun-fill';
+                label.innerText = 'Modo Claro';
+            } else {
+                icon.className = 'bi bi-moon-fill';
+                label.innerText = 'Modo Escuro';
+            }
+        }
+
+        async function buscarDados() {
+            try {
+                const response = await fetch('/api/status');
+                todasImpressoras = await response.json();
+                aplicarFiltros();
+                document.getElementById('atualizacao').innerText = 'Última atualização: ' + new Date().toLocaleTimeString();
+            } catch (err) {
+                console.error('Erro ao buscar status:', err);
+            }
+        }
+
+        function selecionarMarca(marca) {
+            marcaSelecionada = marca;
+            document.getElementById('btnMarcaTodas').classList.toggle('active', marca === 'todas');
+            document.getElementById('btnMarcaRicoh').classList.toggle('active', marca === 'ricoh');
+            document.getElementById('btnMarcaEpson').classList.toggle('active', marca === 'epson');
+            document.getElementById('btnMarcaZebra').classList.toggle('active', marca === 'zebra');
+            aplicarFiltros();
+        }
+
+        function aplicarFiltros() {
+            const textoBusca = document.getElementById('searchInput').value.toLowerCase().trim();
+            const statusFiltro = document.getElementById('filterStatus').value;
+
+            const impressorasDaMarca = todasImpressoras.filter(imp => {
+                return (marcaSelecionada === 'todas') || (imp.tipo === marcaSelecionada);
+            });
+
+            document.getElementById('countOnline').innerText = impressorasDaMarca.filter(i => i.online).length;
+            document.getElementById('countOffline').innerText = impressorasDaMarca.filter(i => !i.online).length;
+
+            const filtradas = impressorasDaMarca.filter(imp => {
+                const bateTexto = imp.setor.toLowerCase().includes(textoBusca) || imp.ip.includes(textoBusca);
+                
+                let bateStatus = false;
+                if (statusFiltro === 'todos') {
+                    bateStatus = true;
+                } else if (statusFiltro === 'toner_critico') {
+                    const t = (imp.toner || '').toLowerCase();
+                    bateStatus = imp.tipo === 'ricoh' && (
+                        t.includes('25%') || 
+                        t.includes('0%') || 
+                        t.includes('crítico') || 
+                        t.includes('critico') || 
+                        t.includes('vazio') || 
+                        t.includes('substituir')
+                    );
+                } else if (statusFiltro === 'producao_critica') {
+                    bateStatus = imp.critica;
+                } else if (statusFiltro === 'online') {
+                    bateStatus = imp.online;
+                } else if (statusFiltro === 'offline') {
+                    bateStatus = !imp.online;
+                } else if (statusFiltro === 'controle_papel') {
+                    bateStatus = imp.tipo === 'ricoh' && (imp.papel_vazio || imp.papel_quase_vazio || imp.papel_alerta);
+                }
+
+                return bateTexto && bateStatus;
+            });
+
+            renderizarGrid(filtradas);
+        }
+
+        function extrairPct(obj) {
+            if (!obj || obj.porcentagem === undefined || obj.porcentagem === null) return 80;
+            return obj.porcentagem;
+        }
+
+        function renderizarGrid(lista) {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            const isDark = document.body.classList.contains('dark-mode');
+
+            if (lista.length === 0) {
+                grid.innerHTML = '<div class="no-results"><i class="bi bi-search" style="font-size: 2rem; display:block; margin-bottom:10px;"></i>Nenhuma impressora encontrada.</div>';
+                return;
+            }
+
+            lista.forEach(imp => {
+                const card = document.createElement('div');
+                card.className = `card ${imp.online ? 'online' : 'offline'} ${imp.critica ? 'critica' : ''}`;
+                card.onclick = () => abrirRelatorio(imp.ip);
+
+                let imgTag = '';
+                if (imp.tipo === 'epson') {
+                    const srcEpson = isDark ? '/static/epson_dark.jpg' : '/static/epson.jpg';
+                    imgTag = `
+                        <img src="${srcEpson}" 
+                             class="printer-img no-invert" 
+                             alt="${imp.setor}"
+                             onerror="this.src='/static/epson.png'; this.onerror=function(){ this.parentElement.innerHTML='<i class=\\'bi bi-printer-fill printer-icon-fallback\\'></i>'; };">
+                    `;
+                } else if (imp.tipo === 'zebra') {
+                    imgTag = `
+                        <img src="/static/zebra.png" 
+                             class="printer-img no-invert" 
+                             alt="${imp.setor}"
+                             onerror="this.src='/static/zebra.jpg'; this.onerror=function(){ this.parentElement.innerHTML='<i class=\\'bi bi-upc-scan printer-icon-fallback\\'></i>'; };">
+                    `;
+                } else {
+                    const imgPrimary = `http://${imp.ip}/images/machineImage.jpg`;
+                    const imgSecondary = `http://${imp.ip}/images/machineImageARDF.jpg`;
+                    imgTag = `
+                        <img src="${imgPrimary}" 
+                             class="printer-img ricoh-img" 
+                             alt="${imp.setor}"
+                             onerror="this.onerror=null; this.src='${imgSecondary}'; this.onerror=function(){ this.parentElement.innerHTML='<i class=\\'bi bi-printer-fill printer-icon-fallback\\'></i>'; }">
+                    `;
+                }
+
+                const temAlertaPapel = (imp.tipo === 'ricoh' && (imp.papel_vazio || imp.papel_quase_vazio || imp.papel_alerta));
+                const dotAmarelo = temAlertaPapel 
+                    ? `<span class="paper-warning-dot" title="${imp.papel_vazio ? 'Sem Papel!' : 'Quase Sem Papel!'}"></span>` 
+                    : '';
+
+                const badgeCritica = imp.critica ? `<span class="critica-badge-top">PRODUÇÃO</span>` : '';
+
+                let htmlInsumo = '';
+                if (imp.tipo === 'ricoh') {
+                    const eColorida = isColorPrinter(imp);
+
+                    if (eColorida) {
+                        const infoColor = imp.toner_info || {};
+                        const pctK = extrairPct(infoColor.black);
+                        const pctC = extrairPct(infoColor.cyan);
+                        const pctM = extrairPct(infoColor.magenta);
+                        const pctY = extrairPct(infoColor.yellow);
+
+                        htmlInsumo = `
+                            <div class="analog-toner-container" style="padding: 5px 6px;">
+                                <div class="analog-header" style="font-size: 0.65rem;">
+                                    <span><i class="bi bi-palette-fill"></i> Toner CMYK (4 Cores)</span>
+                                </div>
+                                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 2px;">
+                                    <div title="Preto (K)">
+                                        <div style="font-size: 0.6rem; font-weight: bold; text-align: center;">K</div>
+                                        <div class="analog-bar-track"><div class="analog-bar-fill" style="width:${pctK}%; background:#333;"></div></div>
+                                    </div>
+                                    <div title="Ciano (C)">
+                                        <div style="font-size: 0.6rem; font-weight: bold; color:#0088cc; text-align: center;">C</div>
+                                        <div class="analog-bar-track"><div class="analog-bar-fill" style="width:${pctC}%; background:#0088cc;"></div></div>
+                                    </div>
+                                    <div title="Magenta (M)">
+                                        <div style="font-size: 0.6rem; font-weight: bold; color:#e6007e; text-align: center;">M</div>
+                                        <div class="analog-bar-track"><div class="analog-bar-fill" style="width:${pctM}%; background:#e6007e;"></div></div>
+                                    </div>
+                                    <div title="Amarelo (Y)">
+                                        <div style="font-size: 0.6rem; font-weight: bold; color:#f39c12; text-align: center;">Y</div>
+                                        <div class="analog-bar-track"><div class="analog-bar-fill" style="width:${pctY}%; background:#f39c12;"></div></div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        let pct = 100;
+                        const statusToner = imp.toner || 'N/A';
+                        
+                        if (statusToner.includes('75%')) pct = 75;
+                        else if (statusToner.includes('50%')) pct = 50;
+                        else if (statusToner.includes('25%')) pct = 25;
+                        else if (statusToner.includes('0%') || statusToner.includes('Crítico') || statusToner.includes('Vazio')) pct = 5;
+
+                        let corBarra = '#27ae60';
+                        if (pct <= 25) corBarra = '#e74c3c';
+                        else if (pct <= 50) corBarra = '#f39c12';
+
+                        htmlInsumo = `
+                            <div class="analog-toner-container">
+                                <div class="analog-header">
+                                    <span><i class="bi bi-droplet-fill"></i> Toner</span>
+                                    <span>${statusToner}</span>
+                                </div>
+                                <div class="analog-bar-track">
+                                    <div class="analog-bar-fill" style="width: ${pct}%; background: ${corBarra};"></div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                } else if (imp.tipo === 'zebra') {
+                    htmlInsumo = `
+                        <div class="generic-insumo-badge zebra">
+                            <i class="bi bi-journal-text"></i> Ribbon / Fita + Etiquetas
+                        </div>
+                    `;
+                } else if (imp.tipo === 'epson') {
+                    htmlInsumo = `
+                        <div class="generic-insumo-badge epson">
+                            <i class="bi bi-disc"></i> Bobina de Papel
+                        </div>
+                    `;
+                }
+
+                card.innerHTML = `
+                    ${badgeCritica}
+                    <div class="status-dots-container">
+                        ${dotAmarelo}
+                        <span class="status-dot ${imp.online ? 'online' : 'offline'}" title="${imp.online ? 'Online' : 'Offline'}"></span>
+                    </div>
+                    <div class="printer-img-container">
+                        ${imgTag}
+                    </div>
+                    <div class="setor-label" title="${imp.setor}">${imp.setor}</div>
+                    <div class="ip-subtext">${imp.ip}</div>
+                    ${htmlInsumo}
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function gerarChecklistRicoh() {
+            const ricohPrinters = todasImpressoras.filter(i => i.tipo === 'ricoh');
+            if (ricohPrinters.length === 0) {
+                alert('Nenhuma impressora Ricoh cadastrada para gerar o checklist.');
+                return;
+            }
+
+            const dataAtual = new Date().toLocaleString('pt-BR');
+            const dataHojeFormatada = new Date().toISOString().slice(0,10);
+            
+            const totalOnline = ricohPrinters.filter(i => i.online).length;
+            const totalOffline = ricohPrinters.filter(i => !i.online).length;
+            const totalAlertaPapel = ricohPrinters.filter(i => i.papel_vazio || i.papel_quase_vazio).length;
+
+            let linhasTabela = ricohPrinters.map((imp, index) => {
+                const statusPing = imp.online 
+                    ? '<span style="color:#27ae60; font-weight:bold;">ONLINE</span>' 
+                    : '<span style="color:#c0392b; font-weight:bold;">OFFLINE</span>';
+                
+                let statusPapel = 'OK';
+                if (imp.papel_vazio) statusPapel = '<span style="color:#c0392b; font-weight:bold;">SEM PAPEL</span>';
+                else if (imp.papel_quase_vazio) statusPapel = '<span style="color:#f39c12; font-weight:bold;">QUASE SEM PAPEL</span>';
+
+                return `
+                    <tr>
+                        <td style="text-align:center;">${index + 1}</td>
+                        <td><strong>${imp.setor}</strong> ${imp.critica ? '<span style="color:#c0392b;">(PRODUÇÃO)</span>' : ''}</td>
+                        <td>${imp.ip}</td>
+                        <td style="text-align:center;">${statusPing}</td>
+                        <td style="text-align:center;">${imp.toner || 'N/A'}</td>
+                        <td style="text-align:center;">${statusPapel}</td>
+                        <td style="text-align:center;">[ &nbsp; ] OK &nbsp;&nbsp; [ &nbsp; ] Pendente</td>
+                    </tr>
+                `;
+            }).join('');
+
+            const template = document.getElementById('pdfTemplate');
+            template.style.display = 'block';
+            template.innerHTML = `
+                <div style="border-bottom: 2px solid #cc0000; padding-bottom: 8px; margin-bottom: 12px;">
+                    <h2 style="color:#cc0000; margin:0; font-size:16pt;">Checklist Diário de Vistoria - Parque Ricoh</h2>
+                    <p style="font-size: 8.5pt; color: #555; margin-top: 3px;">Ricoh Brasil - Managed Services Support | Data/Hora: ${dataAtual}</p>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px; background: #f8f9fa; padding: 8px 12px; border: 1px solid #ddd; font-size: 8.5pt;">
+                    <div><strong>Total Ricoh:</strong> ${ricohPrinters.length}</div>
+                    <div><strong>Online:</strong> ${totalOnline} | <strong>Offline:</strong> ${totalOffline}</div>
+                    <div><strong>Alertas Papel:</strong> ${totalAlertaPapel}</div>
+                    <div><strong>Técnico Responsável:</strong> ______________________</div>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 25px; text-align:center;">#</th>
+                            <th>Setor / Localização</th>
+                            <th>Endereço IP</th>
+                            <th style="width: 70px; text-align:center;">Ping</th>
+                            <th style="width: 85px; text-align:center;">Toner BK</th>
+                            <th style="width: 110px; text-align:center;">Papel</th>
+                            <th style="width: 130px; text-align:center;">Vistoria em Campo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${linhasTabela}
+                    </tbody>
+                </table>
+
+                <div style="margin-top: 15px; font-size: 7.5pt; color: #777; border-top: 1px solid #eee; padding-top: 6px;">
+                    * Este relatório operacional extrai os dados via scraping web da Ricoh e serve como guia de rotina para inspeção física de cartuchos e papel.
+                </div>
+            `;
+
+            const opt = {
+                margin:       8,
+                filename:     `checklist_ricoh_${dataHojeFormatada}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+            };
+
+            html2pdf().set(opt).from(template).save().then(() => {
+                template.style.display = 'none';
+            });
+        }
+
+        function gerarPDFDiario() {
+            const dataAtual = new Date().toLocaleString('pt-BR');
+            const dataHojeFormatada = new Date().toISOString().slice(0,10);
+            
+            const totalOnline = todasImpressoras.filter(i => i.online).length;
+            const totalOffline = todasImpressoras.filter(i => !i.online).length;
+            const totalSemPapel = todasImpressoras.filter(i => i.papel_vazio || i.papel_quase_vazio).length;
+
+            let linhasTabela = todasImpressoras.map(imp => `
+                <tr>
+                    <td><strong>${imp.setor}</strong> ${imp.critica ? '(PRODUÇÃO)' : ''}</td>
+                    <td>${imp.ip}</td>
+                    <td>${imp.tipo.toUpperCase()}</td>
+                    <td style="color: ${imp.online ? '#27ae60' : '#c0392b'}; font-weight: bold;">
+                        ${imp.online ? 'ONLINE' : 'OFFLINE'}
+                    </td>
+                    <td>${imp.tipo === 'ricoh' ? (imp.toner || 'N/A') : 'Insumo Específico'}</td>
+                    <td>${imp.papel_vazio ? 'Sem Papel' : (imp.papel_quase_vazio ? 'Quase Sem Papel' : 'OK')}</td>
+                </tr>
+            `).join('');
+
+            const template = document.getElementById('pdfTemplate');
+            template.style.display = 'block';
+            template.innerHTML = `
+                <h2>Ricoh Brasil - Relatório Diário de Monitoramento</h2>
+                <p style="font-size: 10pt; color: #555;">Data/Hora do Relatório: ${dataAtual}</p>
+                
+                <div style="margin: 15px 0; padding: 10px; background: #f8f9fa; border: 1px solid #ddd; font-size: 10pt;">
+                    <strong>Resumo do Dia:</strong> Total: ${todasImpressoras.length} | Online: ${totalOnline} | Offline: ${totalOffline} | Alerta de Papel: ${totalSemPapel}
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Setor / Local</th>
+                            <th>Endereço IP</th>
+                            <th>Marca</th>
+                            <th>Status Ping</th>
+                            <th>Insumo / Toner</th>
+                            <th>Status do Papel</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${linhasTabela}
+                    </tbody>
+                </table>
+            `;
+
+            const opt = {
+                margin:       10,
+                filename:     `relatorio_impressoras_${dataHojeFormatada}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+            };
+
+            html2pdf().set(opt).from(template).save().then(() => {
+                template.style.display = 'none';
+            });
+        }
+
+        /* --- EXCLUSIVIDADE RICOH E SUPORTE A 4 CORES EM COLORIDAS/PLOTTERS --- */
+        function abrirModalAbastecimento() {
+            const listContainer = document.getElementById('abastecimentoList');
+            listContainer.innerHTML = '';
+
+            const ricohPrinters = todasImpressoras.filter(imp => imp.tipo === 'ricoh');
+
+            if (ricohPrinters.length === 0) {
+                listContainer.innerHTML = '<p style="text-align:center; color:var(--text-secondary);">Nenhuma impressora Ricoh encontrada.</p>';
+            } else {
+                ricohPrinters.forEach(imp => {
+                    const item = document.createElement('div');
+                    item.className = 'abastecimento-item';
+
+                    const eColorida = isColorPrinter(imp);
+                    let checkboxesHtml = '';
+
+                    if (eColorida) {
+                        checkboxesHtml = `
+                            <label class="checkbox-label"><input type="checkbox" data-ip="${imp.ip}" data-setor="${imp.setor}" data-insumo="A4" class="chk-abastecimento"> A4</label>
+                            <label class="checkbox-label"><input type="checkbox" data-ip="${imp.ip}" data-setor="${imp.setor}" data-insumo="A3" class="chk-abastecimento"> A3</label>
+                            <label class="checkbox-label"><input type="checkbox" data-ip="${imp.ip}" data-setor="${imp.setor}" data-insumo="Toner BK" class="chk-abastecimento"> K (Preto)</label>
+                            <label class="checkbox-label" style="color:#0088cc;"><input type="checkbox" data-ip="${imp.ip}" data-setor="${imp.setor}" data-insumo="Toner Ciano" class="chk-abastecimento"> C (Ciano)</label>
+                            <label class="checkbox-label" style="color:#e6007e;"><input type="checkbox" data-ip="${imp.ip}" data-setor="${imp.setor}" data-insumo="Toner Magenta" class="chk-abastecimento"> M (Magenta)</label>
+                            <label class="checkbox-label" style="color:#f39c12;"><input type="checkbox" data-ip="${imp.ip}" data-setor="${imp.setor}" data-insumo="Toner Amarelo" class="chk-abastecimento"> Y (Amarelo)</label>
+                        `;
+                    } else {
+                        checkboxesHtml = `
+                            <label class="checkbox-label"><input type="checkbox" data-ip="${imp.ip}" data-setor="${imp.setor}" data-insumo="A4" class="chk-abastecimento"> A4</label>
+                            <label class="checkbox-label"><input type="checkbox" data-ip="${imp.ip}" data-setor="${imp.setor}" data-insumo="A3" class="chk-abastecimento"> A3</label>
+                            <label class="checkbox-label"><input type="checkbox" data-ip="${imp.ip}" data-setor="${imp.setor}" data-insumo="Toner BK" class="chk-abastecimento"> Toner BK</label>
+                        `;
+                    }
+
+                    item.innerHTML = `
+                        <div class="info">
+                            ${imp.setor} ${eColorida ? '<span style="color:#e6007e; font-size:0.7rem; font-weight:bold;">[COLOR]</span>' : ''}
+                            <span>IP: ${imp.ip}</span>
+                        </div>
+                        <div class="abastecimento-options">
+                            ${checkboxesHtml}
+                        </div>
+                    `;
+                    listContainer.appendChild(item);
+                });
+            }
+
+            document.getElementById('modalAbastecimento').style.display = 'flex';
+        }
+
+        function fecharModalAbastecimento() {
+            document.getElementById('modalAbastecimento').style.display = 'none';
+        }
+
+        async function salvarAbastecimento() {
+            const nome = document.getElementById('colaboradorNome').value.trim();
+            if (!nome) {
+                alert('Por favor, informe seu nome antes de salvar o registro.');
+                return;
+            }
+
+            const checkboxes = document.querySelectorAll('.chk-abastecimento:checked');
+            if (checkboxes.length === 0) {
+                alert('Selecione ao menos um insumo para registrar a substituição.');
+                return;
+            }
+
+            const maquinasMap = {};
+            let totalUnidades = 0;
+
+            checkboxes.forEach(chk => {
+                const ip = chk.dataset.ip;
+                const setor = chk.dataset.setor;
+                const insumo = chk.dataset.insumo;
+
+                if (!maquinasMap[ip]) {
+                    maquinasMap[ip] = { setor, ip, papeis: [] };
+                }
+                maquinasMap[ip].papeis.push(insumo);
+                totalUnidades += 1;
+            });
+
+            const payload = {
+                colaborador: nome,
+                total_maquinas: Object.keys(maquinasMap).length,
+                total_resmas: totalUnidades,
+                maquinas: Object.values(maquinasMap)
+            };
+
+            try {
+                const res = await fetch('/api/abastecimento', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    alert('Troca de insumos registrada com sucesso!');
+                    fecharModalAbastecimento();
+                    document.getElementById('colaboradorNome').value = '';
+                    abrirModalRelatorios();
+                } else {
+                    alert('Erro ao registrar os insumos.');
+                }
+            } catch (e) {
+                alert('Falha na comunicação com o servidor.');
+            }
+        }
+
+        /* --- RELATÓRIO COM DESCRIMINAÇÃO DAS 4 CORES --- */
+        async function abrirModalRelatorios() {
+            const container = document.getElementById('relatoriosContent');
+            container.innerHTML = '<p style="text-align:center;">Carregando histórico...</p>';
+            document.getElementById('modalRelatorios').style.display = 'flex';
+
+            try {
+                const res = await fetch('/api/abastecimentos');
+                historicoAbastecimentos = await res.json();
+                renderizarRelatorios(historicoAbastecimentos);
+            } catch (e) {
+                container.innerHTML = '<p style="color:var(--status-offline);">Falha ao carregar os relatórios.</p>';
+            }
+        }
+
+        function renderizarRelatorios(historico) {
+            const container = document.getElementById('relatoriosContent');
+
+            const filtroHtml = `
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 15px; background: var(--report-bg); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <i class="bi bi-calendar3" style="color: var(--brand-primary); font-size: 1.1rem;"></i>
+                        <label for="filtroDataRelatorio" style="font-weight: bold; font-size: 0.85rem;">Selecione a Data:</label>
+                        <input type="date" id="filtroDataRelatorio" class="filter-status-select" style="padding: 5px 8px; font-size: 0.85rem;" onchange="aplicarFiltroDataRelatorio()">
+                    </div>
+                    <button class="btn-action" style="padding: 5px 10px; font-size: 0.8rem;" onclick="limparFiltroDataRelatorio()">
+                        <i class="bi bi-arrow-clockwise"></i> Ver Todos os Dias
+                    </button>
+                </div>
+            `;
+
+            if (!historico || historico.length === 0) {
+                container.innerHTML = filtroHtml + '<p style="text-align:center; color:var(--text-secondary); padding: 20px;">Nenhum registro de insumos encontrado para esta seleção.</p>';
+                return;
+            }
+
+            let totalA4Geral = 0;
+            let totalA3Geral = 0;
+            let totalTonerBK = 0;
+            let totalTonerCiano = 0;
+            let totalTonerMagenta = 0;
+            let totalTonerAmarelo = 0;
+
+            let cardsHtml = '';
+
+            historico.forEach(item => {
+                let qtdA4 = 0;
+                let qtdA3 = 0;
+                let qtdBK = 0;
+                let qtdCiano = 0;
+                let qtdMagenta = 0;
+                let qtdAmarelo = 0;
+
+                let maquinasHtml = item.maquinas.map(m => {
+                    m.papeis.forEach(p => {
+                        if (p === 'A4') { qtdA4++; totalA4Geral++; }
+                        else if (p === 'A3') { qtdA3++; totalA3Geral++; }
+                        else if (p === 'Toner BK') { qtdBK++; totalTonerBK++; }
+                        else if (p === 'Toner Ciano') { qtdCiano++; totalTonerCiano++; }
+                        else if (p === 'Toner Magenta') { qtdMagenta++; totalTonerMagenta++; }
+                        else if (p === 'Toner Amarelo') { qtdAmarelo++; totalTonerAmarelo++; }
+                    });
+                    return `<li><strong>${m.setor}</strong> (${m.ip}) - Substituto: ${m.papeis.join(', ')}</li>`;
+                }).join('');
+
+                let resumoItens = [];
+                if (qtdA4 > 0) resumoItens.push(`<b>${qtdA4}</b> A4`);
+                if (qtdA3 > 0) resumoItens.push(`<b>${qtdA3}</b> A3`);
+                if (qtdBK > 0) resumoItens.push(`<b>${qtdBK}</b> Toner BK`);
+                if (qtdCiano > 0) resumoItens.push(`<b>${qtdCiano}</b> Ciano`);
+                if (qtdMagenta > 0) resumoItens.push(`<b>${qtdMagenta}</b> Magenta`);
+                if (qtdAmarelo > 0) resumoItens.push(`<b>${qtdAmarelo}</b> Amarelo`);
+
+                cardsHtml += `
+                    <div class="history-card">
+                        <div class="history-header">
+                            <span class="history-colaborador"><i class="bi bi-person-fill"></i> ${item.colaborador}</span>
+                            <span><i class="bi bi-clock-history"></i> ${item.data_hora}</span>
+                        </div>
+                        <div class="history-details">
+                            <p style="margin-bottom: 6px;"><strong>Máquinas atendidas:</strong> ${item.total_maquinas} | <strong>Retiradas:</strong> ${resumoItens.join(', ') || 'Nenhum insumo'}</p>
+                            <ul style="padding-left: 20px; font-size: 0.82rem; color: var(--text-secondary);">
+                                ${maquinasHtml}
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            });
+
+            const resumoEstoqueHtml = `
+                <div style="background: var(--toggle-bg); border: 2px dashed var(--brand-primary); border-radius: 10px; padding: 15px; margin-bottom: 20px;">
+                    <h3 style="font-size: 0.95rem; color: var(--brand-primary); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                        <i class="bi bi-boxes"></i> Consolidado de Insumos Retirados do Estoque
+                    </h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px; text-align: center;">
+                        <div style="background: var(--card-bg); padding: 8px; border-radius: 6px; border: 1px solid var(--border-color);">
+                            <span style="font-size: 0.7rem; color: var(--text-secondary); font-weight: bold; display: block;">RESMAS A4</span>
+                            <span style="font-size: 1.2rem; font-weight: 800; color: var(--text-primary);">${totalA4Geral}</span>
+                        </div>
+                        <div style="background: var(--card-bg); padding: 8px; border-radius: 6px; border: 1px solid var(--border-color);">
+                            <span style="font-size: 0.7rem; color: var(--text-secondary); font-weight: bold; display: block;">RESMAS A3</span>
+                            <span style="font-size: 1.2rem; font-weight: 800; color: var(--text-primary);">${totalA3Geral}</span>
+                        </div>
+                        <div style="background: var(--card-bg); padding: 8px; border-radius: 6px; border: 1px solid var(--border-color);">
+                            <span style="font-size: 0.7rem; color: var(--text-secondary); font-weight: bold; display: block;">TONER BK</span>
+                            <span style="font-size: 1.2rem; font-weight: 800; color: var(--text-primary);">${totalTonerBK}</span>
+                        </div>
+                        <div style="background: var(--card-bg); padding: 8px; border-radius: 6px; border: 1px solid #0088cc;">
+                            <span style="font-size: 0.7rem; color: #0088cc; font-weight: bold; display: block;">CIANO</span>
+                            <span style="font-size: 1.2rem; font-weight: 800; color: #0088cc;">${totalTonerCiano}</span>
+                        </div>
+                        <div style="background: var(--card-bg); padding: 8px; border-radius: 6px; border: 1px solid #e6007e;">
+                            <span style="font-size: 0.7rem; color: #e6007e; font-weight: bold; display: block;">MAGENTA</span>
+                            <span style="font-size: 1.2rem; font-weight: 800; color: #e6007e;">${totalTonerMagenta}</span>
+                        </div>
+                        <div style="background: var(--card-bg); padding: 8px; border-radius: 6px; border: 1px solid #f39c12;">
+                            <span style="font-size: 0.7rem; color: #f39c12; font-weight: bold; display: block;">AMARELO</span>
+                            <span style="font-size: 1.2rem; font-weight: 800; color: #f39c12;">${totalTonerAmarelo}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = filtroHtml + resumoEstoqueHtml + cardsHtml;
+        }
+
+        function aplicarFiltroDataRelatorio() {
+            const dataInput = document.getElementById('filtroDataRelatorio').value;
+            if (!dataInput) {
+                renderizarRelatorios(historicoAbastecimentos);
+                return;
+            }
+
+            const [ano, mes, dia] = dataInput.split('-');
+            const dataProcurada = `${dia}/${mes}/${ano}`;
+
+            const filtrado = historicoAbastecimentos.filter(item => {
+                return item.data_hora && item.data_hora.startsWith(dataProcurada);
+            });
+
+            renderizarRelatorios(filtrado);
+            document.getElementById('filtroDataRelatorio').value = dataInput;
+        }
+
+        function limparFiltroDataRelatorio() {
+            document.getElementById('filtroDataRelatorio').value = '';
+            renderizarRelatorios(historicoAbastecimentos);
+        }
+
+        function fecharModalRelatorios() {
+            document.getElementById('modalRelatorios').style.display = 'none';
+        }
+
+        async function abrirRelatorio(ip) {
+            const overlay = document.getElementById('modalOverlay');
+            const content = document.getElementById('modalContent');
+            
+            content.innerHTML = '<p style="text-align:center;">Carregando relatório...</p>';
+            overlay.style.display = 'flex';
+
+            try {
+                const res = await fetch(`/api/detalhes/${ip}`);
+                const dados = await res.json();
+
+                if (dados.erro) {
+                    content.innerHTML = `<p style="color:var(--status-offline); text-align:center;">${dados.erro}</p>`;
+                    return;
+                }
+
+                const iconePapel = dados.papel_icone || 'deviceStP75_16.gif';
+                const imgPapelHtml = `<img src="http://${dados.ip}/images/${iconePapel}" alt="Status do Papel" onerror="this.style.display='none'">`;
+
+                content.innerHTML = `
+                    <div class="report-grid">
+                        <div class="report-item full-width">
+                            <span class="report-label">Endereço IP</span>
+                            <span class="report-value">${dados.ip || '-'}</span>
+                        </div>
+                        <div class="report-item">
+                            <span class="report-label">Modelo</span>
+                            <span class="report-value">${dados.modelo || '-'}</span>
+                        </div>
+                        <div class="report-item">
+                            <span class="report-label">Hostname</span>
+                            <span class="report-value">${dados.hostname || '-'}</span>
+                        </div>
+                        <div class="report-item">
+                            <span class="report-label">Local</span>
+                            <span class="report-value">${dados.local || '-'}</span>
+                        </div>
+                        <div class="report-item">
+                            <span class="report-label">Comentário</span>
+                            <span class="report-value">${dados.comentario || '-'}</span>
+                        </div>
+                        <div class="report-item">
+                            <span class="report-label">Status do Sistema</span>
+                            <span class="report-value">${dados.sistema || '-'}</span>
+                        </div>
+                        <div class="report-item">
+                            <span class="report-label">Status do Toner</span>
+                            <span class="report-value">${dados.toner || '-'}</span>
+                        </div>
+                        <div class="report-item">
+                            <span class="report-label">Bandeja Entrada</span>
+                            <span class="report-value">
+                                ${imgPapelHtml}
+                                ${dados.bandeja_entrada || '-'}
+                            </span>
+                        </div>
+                        <div class="report-item">
+                            <span class="report-label">Bandeja Saída</span>
+                            <span class="report-value">${dados.bandeja_saida || '-'}</span>
+                        </div>
+                        <div class="report-item full-width">
+                            <span class="report-label">Última Coleta</span>
+                            <span class="report-value">${dados.coletado_em ? new Date(dados.coletado_em).toLocaleString() : '-'}</span>
+                        </div>
+                    </div>
+                `;
+            } catch (err) {
+                content.innerHTML = '<p style="color:var(--status-offline); text-align:center;">Falha ao carregar os dados.</p>';
+            }
+        }
+
+        function fecharModal() {
+            document.getElementById('modalOverlay').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            if (event.target === document.getElementById('modalOverlay')) fecharModal();
+            if (event.target === document.getElementById('modalAbastecimento')) fecharModalAbastecimento();
+            if (event.target === document.getElementById('modalRelatorios')) fecharModalRelatorios();
+        };
+
+        initTheme();
+        buscarDados();
+        setInterval(buscarDados, 5000);
+    </script>
+</body>
+</html>

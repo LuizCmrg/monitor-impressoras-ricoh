@@ -1,0 +1,7 @@
+venv/
+__pycache__/
+*.pyc
+html_bruto/
+resultado.json
+abastecimentos.json
+.vscode/
